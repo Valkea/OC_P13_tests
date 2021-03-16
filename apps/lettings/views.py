@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from django.http import HttpResponseNotFound
+
 from .models import Letting
 
 
@@ -28,9 +30,12 @@ def letting(request, letting_id):
     dolor risus. Mauris condimentum auctor elementum. Donec quis nisi ligula.
     Integer vehicula tincidunt enim, ac lacinia augue pulvinar sit amet.
     """
-    letting = Letting.objects.get(id=letting_id)
-    context = {
-        "title": letting.title,
-        "address": letting.address,
-    }
-    return render(request, "lettings/letting.html", context)
+    try:
+        letting = Letting.objects.get(id=letting_id)
+        context = {
+            "title": letting.title,
+            "address": letting.address,
+        }
+        return render(request, "lettings/letting.html", context)
+    except Letting.DoesNotExist:
+        return HttpResponseNotFound(f"Letting ID:{letting_id} doesn't exist")
