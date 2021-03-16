@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from django.http import HttpResponseNotFound
+
 from .models import Profile
 
 
@@ -21,6 +23,9 @@ def profile(request, username):
     aliquam dignissim congue. Pellentesque habitant morbi tristique senectus et
     netus et males
     """
-    profile = Profile.objects.get(user__username=username)
-    context = {"profile": profile}
-    return render(request, "profiles/profile.html", context)
+    try:
+        profile = Profile.objects.get(user__username=username)
+        context = {"profile": profile}
+        return render(request, "profiles/profile.html", context)
+    except Profile.DoesNotExist:
+        return HttpResponseNotFound(f"Profile '{username}' doesn't exist")
