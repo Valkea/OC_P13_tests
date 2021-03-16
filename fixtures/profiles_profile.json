@@ -1,0 +1,1 @@
+[{"model": "profiles.profile", "pk": 1, "fields": {"user": 5, "favorite_city": "Buenos Aires"}}, {"model": "profiles.profile", "pk": 2, "fields": {"user": 4, "favorite_city": "Barcelona"}}, {"model": "profiles.profile", "pk": 3, "fields": {"user": 3, "favorite_city": "Budapest"}}, {"model": "profiles.profile", "pk": 4, "fields": {"user": 2, "favorite_city": "Berlin"}}]
