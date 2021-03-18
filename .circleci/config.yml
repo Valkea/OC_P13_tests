@@ -1,0 +1,60 @@
+# version: 2.1
+# jobs:
+#   build:
+#     docker: 
+#       - image: cimg/node:14.10.1 # the primary container, where your job's commands are run
+#         auth:
+#           username: $DOCKER_LOGIN
+#           password: $DOCKER_PASSWORD  # context / project UI env-var reference
+#     steps:
+#       - checkout # check out the code in the project directory
+#       - run: echo "hello world" # run the `echo` command
+
+version: 2.1
+
+orbs:
+        python: circleci/python@0.2.1
+
+jobs:
+        build-and-test:
+                executor: python/default
+                steps:
+                        - checkout
+                        - python/load-cache
+                        - python/install-deps
+                        - python/save-cache
+                          store_test_results
+                        - run:
+                                command: pytest
+                                name: pytest
+                        - run:
+                                command: flake8
+                                name: flake8
+        push:
+                machine: true
+                steps:
+                        # - setup_remote_docker
+                        
+                        # Login
+                        - run: echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_LOGIN --password-stdin
+
+                        # Build
+                        - run:
+                                name: Build and deploy docker images
+                                # command: docker build -t $HUB_NAME:latest .
+                                command: docker-compose up -d
+
+                        # Push
+                        - deploy:
+                                name: Push application Docker image
+                                command: |
+                                        docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
+                                        docker tag $HUB_NAME;latest $DOCKER_LOGIN/$HUB_NAME:latest
+                                        docker push $DOCKER_LOGIN/$HUB_NAME:latest
+
+
+workflows:
+        main:
+                jobs:
+                        - build-and-test
+                        - push
