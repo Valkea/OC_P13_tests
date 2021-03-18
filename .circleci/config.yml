@@ -23,7 +23,8 @@ jobs:
                         - python/load-cache
                         - python/install-deps
                         - python/save-cache
-                        - store_test_results
+                        - store_test_results:
+                                path: /apps/test-results
                         - run:
                                 command: pytest
                                 name: pytest
