@@ -13,60 +13,69 @@
 version: 2.1
 
 orbs:
-        python: circleci/python@0.2.1
+        python: circleci/python@1.3.2
+        docker: circleci/docker@1.5.0
 
 jobs:
-        build-and-test:
+        build-test-push:
                 executor: python/default
                 steps:
                         - checkout
-                        - python/load-cache
-                        - python/install-deps
-                        - python/save-cache
-                        - run:
-                                command: flake8
-                                name: flake8
-                        - run:
-                                name: run tests
-                                command: |
-                                        . venv/bin/activate
-                                        mkdir test-results
-                                        pytest --junitxml=test-results/junit.xml
-                        - store_test_results:
-                                path: test-results
-                        - store_artifacts:
-                                path: test-results
+                        - python/install-packages:
+                                pip-dependency-file: requirements.txt
+                                pkg-manager: pip
+
+                          # - python/load-cache
+                          # - python/install-deps
+                          # - python/save-cache
+                          # - run:
+                          #       command: mkdir test-results
+                          #       name: mkdir test-results
                         - run:
                                 command: pytest
                                 name: pytest
-        push:
-                machine: true
-                steps:
-                        - checkout
-                        - python/load-cache
-                        - python/install-deps
-                        - python/save-cache
-                        
-                        # Login
-                        - run: echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_LOGIN --password-stdin
-
-                        # Build
                         - run:
-                                name: Build and deploy docker images
-                                # command: docker build -t $HUB_NAME:latest .
-                                command: docker-compose up -d
+                                command: flake8
+                                name: flake8
+                        - docker/install-docker-compose:
+                                version: "1.28.5"
 
-                        # Push
-                        - deploy:
-                                name: Push application Docker image
-                                command: |
-                                        docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
-                                        docker tag $HUB_NAME;latest $DOCKER_LOGIN/$HUB_NAME:latest
-                                        docker push $DOCKER_LOGIN/$HUB_NAME:latest
+                          # - run:
+                          #         name: setup tests folder
+                          #         command: #|
+                          #                 # . venv/bin/activate
+                          #                 mkdir test-results
+                          #                 # pytest --junitxml=test-results/junit.xml
+                          # - store_test_results:
+                          #       path: test-results
+                          # - store_artifacts:
+                          #         path: test-results
+                        
+                                # # Login
+                                # - run: echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_LOGIN --password-stdin
+
+                                # # Build
+                                # - run:
+                                #         name: Build and deploy docker images
+                                #         # command: docker build -t $HUB_NAME:latest .
+                                #         command: docker-compose up -d
+
+                                # # Push
+                                # - deploy:
+                                #         name: Push application Docker image
+                                #         command: |
+                                #                 docker login -u $DOCKER_LOGIN -p $DOCKER_PASSWORD
+                                #                 docker tag $HUB_NAME;latest $DOCKER_LOGIN/$HUB_NAME:latest
+                                #                 docker push $DOCKER_LOGIN/$HUB_NAME:latest
 
 
 workflows:
         main:
                 jobs:
-                        - build-and-test
-                        - push
+                        - build-test-push
+                        - docker/publish:
+                                image: $DOCKER_LOGIN/$PROJECT_REPONAME
+                                # remote-docker-dlc: true
+                                tag: latest
+                                # use-remote-docker: true
+
