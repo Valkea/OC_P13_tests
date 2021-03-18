@@ -23,18 +23,29 @@ jobs:
                         - python/load-cache
                         - python/install-deps
                         - python/save-cache
-                        - store_test_results:
-                                path: /apps/test-results
-                        - run:
-                                command: pytest
-                                name: pytest
                         - run:
                                 command: flake8
                                 name: flake8
+                        - run:
+                                name: run tests
+                                command: |
+                                        . venv/bin/activate
+                                        mkdir test-results
+                                        pytest --junitxml=test-results/junit.xml
+                        - store_test_results:
+                                path: test-results
+                        - store_artifacts:
+                                path: test-results
+                        - run:
+                                command: pytest
+                                name: pytest
         push:
                 machine: true
                 steps:
-                        # - setup_remote_docker
+                        - checkout
+                        - python/load-cache
+                        - python/install-deps
+                        - python/save-cache
                         
                         # Login
                         - run: echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_LOGIN --password-stdin
