@@ -76,6 +76,6 @@ workflows:
                         - docker/publish:
                                 image: $DOCKER_LOGIN/$PROJECT_REPONAME
                                 # remote-docker-dlc: true
-                                tag: latest
+                                tag: latest,$CIRCLE_SHA1
                                 # use-remote-docker: true
 
