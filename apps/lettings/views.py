@@ -39,3 +39,8 @@ def letting(request, letting_id):
         return render(request, "lettings/letting.html", context)
     except Letting.DoesNotExist:
         return HttpResponseNotFound(f"Letting ID:{letting_id} doesn't exist")
+
+
+def trigger_error(request):
+    division_by_zero = 1 / 0
+    print(division_by_zero)
