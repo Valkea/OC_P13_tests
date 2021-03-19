@@ -82,6 +82,9 @@ workflows:
                                 # remote-docker-dlc: true
                                 tag: latest,$CIRCLE_SHA1
                                 # use-remote-docker: true
+                                filters:
+                                        branches:
+                                                only: master
                         - deploy-heroku:
                                 requires:
                                         - build-and-test
