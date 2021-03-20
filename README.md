@@ -59,15 +59,126 @@ Dans le reste de la documentation sur le développement local, il est supposé q
 - Ouvrir une session shell `sqlite3`
 - Se connecter à la base de données `.open oc-lettings-site.sqlite3`
 - Afficher les tables dans la base de données `.tables`
-- Afficher les colonnes dans le tableau des profils, `pragma table_info(Python-OC-Lettings-FR_profile);`
+- Afficher les colonnes dans le tableau des profils, `pragma table_info(oc_lettings_site_profile);`
 - Lancer une requête sur la table des profils, `select user_id, favorite_city from
-  Python-OC-Lettings-FR_profile where favorite_city like 'B%';`
+  oc_lettings_site_profile where favorite_city like 'B%';`
 - `.quit` pour quitter
 
 #### Panel d'administration
 
 - Aller sur `http://localhost:8000/admin`
 - Connectez-vous avec l'utilisateur `admin`, mot de passe `Abc1234!`
+
+### Déploiement
+
+Le pipeline choisi pour déployer ce projet est le suivant : 
+
+1. dev-local
+2. git-hub
+3. circleCI
+4. Docker Hub & Heroku
+5. Sentry.
+
+Lorsque l'on soumet un commit sur GitHub, circleCI va automatiquement déclencher un processus qui consiste à aller chercher le commit en question, à le conteneuriser pour l'envoyer sur Docker Hub et sur Heroku ou il est ensuite accessible.
+
+#### Configuration nécessaire
+
+Outre le compte github avec lequel vous pouvez récupèrer ce projet, il vous faudra également des comptes sur les sites suivants :
+
+- [CircleCi](https://circleci.com/signup/)
+- [Docker Hub](https://hub.docker.com/signup?next=%2Forgs%3Fref%3Dlogin)
+- [Heroku](https://signup.heroku.com/)
+- [Sentry](https://sentry.io/signup/)
+
+Par ailleurs, il est plus pratique d'installer Docker-CLI et Heroku-CLI pour pouvoir les utiliser directement sur votre machine.
+
+- [Instructions pour installer Docker CLI](https://docs.docker.com/engine/install/)
+- [Instructions pour installer Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+
+
+#### Étapes de configuration
+
+##### 1. Heroku
+Une fois votre compte validé, utilisez le menu `New` / `Create new app` pour créer une nouvelle application de votre choix (s'il contient `oc-lettings`, c'est mieux).
+
+Toutes les autres informations utiles à Heroku lui seront envoyées en même temps que le container par CircleCI.
+
+Les variables suivantes seront utiles pour la configuration de CircleCI :
+- **HEROKU_APP_NAME** => C'est le nom de l'application que vous avez crée
+- **HEROKU_TOKEN** => Utilisez `heroku authorizations:create` de Heroku-CLI
+
+##### 2. Docker Hub
+Une fois votre compte validé, utilisez le bouton `Create Repository` pour créer un nouveau dépot pour les conteneurs (s'il contient `oc-lettings`, c'est mieux).
+
+Les variables suivantes seront utiles pour la configuration de CircleCI :
+- **DOCKER_LOGIN** => Votre identifiant Docker Hub
+- **DOCKER_PASSWORD** => Votre mot de passe Docker Hub
+- **PROJECT_REPONAME** => Le nom de votre repo sur Docker Hub (idéalement c'est le même que l'app Heroku)
+
+##### 3. Sentry
+Une fois votre compte validé, utilisez le bouton `Create Project` en haut à droite pour créer votre projet.
+
+La variable suivante sera utile pour la configuration de CircleCI :
+- **SENTRY_DSN** => Vous pouvez la trouver sur le site Sentry dans `Settings` / `Projects` / VOTRE_PROJECT / `Client Keys (DSN)` / `DSN`
+
+##### 4. CircleCI
+C'est ici que le plus gros du travail de configuration doit se faire. En effet, une fois connecté à votre compte, allez dans le menu `Projets` puis connectez le repo-github avec lequel vous travaillez ç l'aide du bouton `Set Up Project`. Le projet possédant déjà un fichier de configuration dans .circleci/config.yml il va vous être proposé de l'utiliser. Confirmez.
+
+Une fois sur la page de gestion de votre projet sur CircleCI, utilisez le bouton `Project Settings` à droite, puis `Environment Variables` à gauche. Placez y les variables suivantes :
+
+- **HEROKU_APP_NAME** => C'est le nom de l'application que vous avez crée sur Heroku en étape 1
+- **HEROKU_TOKEN** => Utilisez `heroku authorizations:create` de Heroku-CLI
+
+- **DOCKER_LOGIN** => Votre identifiant Docker Hub
+- **DOCKER_PASSWORD** => Votre mot de passe Docker Hub
+- **PROJECT_REPONAME** => Le nom de votre repo sur Docker Hub (idéalement c'est le même que l'app Heroku)
+
+- **SENTRY_DSN** => Vous pouvez la trouver sur le site Sentry dans `Settings` / `Projects` / VOTRE_PROJECT / `Client Keys (DSN)` / `DSN`
+
+- **DJANGO_SECRET_KEY** => Vous pouvez la générez avec un suite comme [djecrety](https://djecrety.ir/) ou la générer avec le code suivant :
+
+```bash
+>>> from django.core.management import utils
+>>> print(utils.get_random_secret_key())
+```
+
+
+#### Utiliser le container Docker-Hub en local
+
+Pour utiliser le container envoyé sur Docker-Hub en local il vous faut d'abord mettre en place quelques variables d'énvironnement :
+
+```bash
+>>> export SENTRY_DSN="La même chose que pour CircleCI"
+>>> export DEBUG=1
+```
+
+Puis utiliser la commande suivante pour récupèrer le conteneur et le lancer:
+
+```bash
+>>> docker run --pull always -d -e "PORT=8000" -e SENTRY_DSN -e DEBUG -p 80:8000 valkea/oc-lettings
+```
+
+Enfin pour vérifier qu'il fonctionne bien vous pouvez visitez l'url suivante : [http://127.0.0.1](http://127.0.0.1)
+
+Une fois terminé, vous pouvez obtenir l'ID du container avec 
+
+```bash
+>>> docker ps -a
+```
+
+et le clore avec 
+
+```bash
+>>> docker stop {containerID}
+>>> docker system prune # pour nettoyer, mais non obligatoire
+```
+
+#### Lancer gunicorn dans le dossier de developpement
+
+```bash
+>>> gunicorn oc_lettings_site.wsgi
+```
+Mais cette fois l'url devra avoir en plus le port 8000 >> [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ### Windows
 
