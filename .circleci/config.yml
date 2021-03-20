@@ -13,15 +13,8 @@ jobs:
                         - checkout:
                                 path: /home/circleci/project
                         - python/install-packages:
-                                # pip-dependency-file: /home/circleci/build-dir/requirements.txt
                                 pip-dependency-file: requirements.txt
                                 pkg-manager: pip
-                          # - python/load-cache
-                          # - python/install-deps
-                          # - python/save-cache
-                          # - run:
-                          #       command: mkdir test-results
-                          #       name: mkdir test-results
                         - save_cache:
                                 key: git-sha-{{ .Revision }}
                                 paths:
