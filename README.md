@@ -128,31 +128,31 @@ Une fois sur la page de gestion de votre projet sur CircleCI, utilisez le bouton
 
 - **HEROKU_APP_NAME**
 
-Le nom de l'application Heroku
+> Le nom de l'application Heroku
 
 - **HEROKU_TOKEN**	
 
-Utilisez `heroku authorizations:create` de Heroku-CLI
+> Utilisez `heroku authorizations:create` de Heroku-CLI
 
 - **DOCKER_LOGIN**	
 
-Votre identifiant Docker-Hub
+> Votre identifiant Docker-Hub
 
 - **DOCKER_PASSWORD**
 
-Votre mot de passe Docker-Hub
+> Votre mot de passe Docker-Hub
 
 - **PROJECT_REPONAME**	
 
-Le nom du repo sur Docker-Hub
+> Le nom du repo sur Docker-Hub
 
 - **SENTRY_DSN**	
 
-Vous pouvez la trouver sur le site Sentry dans `Settings` / `Projects` / {VOTRE_PROJECT} / `Client Keys (DSN)` / `DSN`
+> Vous pouvez la trouver sur le site Sentry dans `Settings` / `Projects` / {VOTRE_PROJECT} / `Client Keys (DSN)` / `DSN`
 
 - **DJANGO_SECRET_KEY**
 
-Vous pouvez la générez avec un suite comme [djecrety](https://djecrety.ir/) ou la générer avec le code ci-dessous
+> Vous pouvez la générez avec un suite comme [djecrety](https://djecrety.ir/) ou la générer avec le code ci-dessous
 
 ```bash
 >>> from django.core.management import utils
@@ -174,15 +174,18 @@ Puis utiliser la commande suivante pour récupèrer le conteneur et le lancer:
 >>> docker run --pull always -d -e "PORT=8000" -e SENTRY_DSN -e DEBUG -p 80:8000 DOCKER_LOGIN/PROJECT_REPONAME
 ```
 
-Enfin pour vérifier qu'il fonctionne bien vous pouvez visitez l'url suivante : [http://127.0.0.1](http://127.0.0.1)
+> Vous pouvez essayer avec le repo `valkea/oc-lettings` mais il vous faudra tout de même les variables d'environnement, sinon le conteneur ne se lancera pas...
+> `docker run --pull always -d -e "PORT=8000" -e SENTRY_DSN -e DEBUG -p 80:8000 valkea/oc-lettings:latest`
 
-Une fois terminé, vous pouvez obtenir l'ID du container avec 
+Pour vérifier qu'il fonctionne bien vous pouvez visitez l'url suivante : [http://127.0.0.1](http://127.0.0.1)
+
+Enfin, une fois terminé, recupèrer l'ID du container avec :
 
 ```bash
 >>> docker ps -a
 ```
 
-et le clore avec 
+et fermez le avec la commande suivante :
 
 ```bash
 >>> docker stop {containerID}
