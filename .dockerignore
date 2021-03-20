@@ -1,0 +1,12 @@
+fixtures
+.circleci
+.dockerignore
+.pytest_cache
+venv
+
+#Ignoring git and cache folders
+.git
+.cache
+.gitignore
+
+*.swp
