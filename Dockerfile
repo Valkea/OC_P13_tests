@@ -24,5 +24,5 @@ COPY . /app/
 RUN python manage.py collectstatic --noinput --clear
 
 #CMD python manage.py runserver 0.0.0.0:8000
-CMD gunicorn oc_lettings_site.wsgi:application --bind 0.0.0.0:$PORT
+CMD django-admin migrate --noinput & gunicorn oc_lettings_site.wsgi:application --bind 0.0.0.0:$PORT
 

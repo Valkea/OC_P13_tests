@@ -1,6 +1,13 @@
+
 import os
+
+import django
+import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", __file__)
+django.setup()
 
 # Sentry config
 sentry_sdk.init(
@@ -88,12 +95,28 @@ WSGI_APPLICATION = "oc_lettings_site.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "oc-lettings-site.sqlite3"),
+if "DATABASE_URL" in os.environ:
+    DATABASES = {
+        "default": {
+            # "ENGINE": "django.db.backends.postgresql",
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            "NAME": "oc-lettings-site",
+            "USER": 'DB_USER',
+            "PASSWORD": 'DB_PASSWORD',
+            "HOST": "localhost",
+            "PORT": "5432",
+        }
     }
-}
+# Heroku Database
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(BASE_DIR, "oc-lettings-site.sqlite3"),
+        }
+    }
 
 
 # Password validation
