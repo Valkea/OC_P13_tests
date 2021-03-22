@@ -15,50 +15,77 @@ jobs:
                         - python/install-packages:
                                 pip-dependency-file: requirements.txt
                                 pkg-manager: pip
+                        - save_cache:
+                                key: git-sha-{{ .Revision }}
+                                paths:
+                                        - /home/circleci/project
                         - run:
                                 command: pytest
                                 name: pytest
                         - run:
                                 command: flake8
                                 name: flake8
-
-        build-and-push:
+        # deploy-docker:
+        #         executor: docker/docker
+        #         working_directory: /home/circleci/project
+        #         steps:
+        #                 - setup_remote_docker
+        #                   # - checkout
+        #                 - restore_cache:
+        #                         key: git-sha-{{ .Revision }}
+        #                 - docker/check
+        #                 - docker/build:
+        #                         image: $DOCKER_LOGIN/$PROJECT_REPONAME
+        #                 - docker/push:
+        #                         image: $DOCKER_LOGIN/$PROJECT_REPONAME
+        #                         tag: latest,$CIRCLE_SHA1 # TODO NE fonctionne pas !
+        #                 - save_cache:
+        #                         key: docker-build-{{ .Revision }}
+        #                         paths:
+        #                                - /home/circleci/project
+                        
+        deploy-heroku:
                 machine: true
                 working_directory: /home/circleci/project
                 steps:
-                        - checkout:
-                                path: /home/circleci/project
+                        # - checkout
+                        - restore_cache:
+                                keys:
+                                        - git-sha-{{ .Revision }}
+                                        # - docker-build-{{ .Revision }}
                         - run:
-                                name: Build and push Docker image
+                                name: Build and push Docker image to Heroku
                                 command: |
-                                        docker build -t ${PROJECT_REPONAME} .
+                                        sudo curl https://cli-assets.heroku.com/install.sh | sh
+                                        HEROKU_API_KEY=${HEROKU_TOKEN} heroku container:login
+                                        HEROKU_API_KEY=${HEROKU_TOKEN} heroku config:set DEBUG=0 -a ${HEROKU_APP_NAME}
+                                        HEROKU_API_KEY=${HEROKU_TOKEN} heroku config:set PORT=8000 -a ${HEROKU_APP_NAME}
+                                        HEROKU_API_KEY=${HEROKU_TOKEN} heroku config:set SECRET_KEY=${DJANGO_SECRET_KEY} -a ${HEROKU_APP_NAME}
+                                        HEROKU_API_KEY=${HEROKU_TOKEN} heroku config:set SENTRY_DSN=${SENTRY_DSN} -a ${HEROKU_APP_NAME}
+                                        HEROKU_API_KEY=${HEROKU_TOKEN} heroku container:push -a ${HEROKU_APP_NAME} web
+                                        HEROKU_API_KEY=${HEROKU_TOKEN} heroku container:release -a ${HEROKU_APP_NAME} web
 
-                        - run:
-                                name: push Docker image to Heroku
-                                command: |
-                                        docker login -u ${HEROKU_USERNAME} -p ${HEROKU_TOKEN} registry.heroku.com
-
-                                        docker tag ${PROJECT_REPONAME}:latest registry.heroku.com/${HEROKU_APP_NAME}/web
-                                        docker push registry.heroku.com/${HEROKU_APP_NAME}/web
-
-                                        docker logout registry.heroku.com
-                        - run:
-                                name: push Docker image to Docker-Hub
-                                command: |
-                                        echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_LOGIN} --password-stdin
-
-                                        docker tag ${PROJECT_REPONAME}:latest ${DOCKER_LOGIN}/${PROJECT_REPONAME}:latest
-                                        docker tag ${PROJECT_REPONAME}:latest ${DOCKER_LOGIN}/${PROJECT_REPONAME}:${CIRCLE_SHA1}
-                                        docker push ${DOCKER_LOGIN}/${PROJECT_REPONAME}
-
-                                        docker logout
 workflows:
         main:
                 jobs:
                         - build-and-test
-                        - build-and-push:
+                        # - deploy-docker:
+                        #         requires:
+                        #                 - build-and-test
+                        - docker/publish:
+                                requires:
+                                        - build-and-test
+                                image: $DOCKER_LOGIN/$PROJECT_REPONAME
+                                # remote-docker-dlc: true
+                                tag: latest,$CIRCLE_SHA1
+                                # use-remote-docker: true
+                                filters:
+                                        branches:
+                                                only: master
+                        - deploy-heroku:
                                 requires:
                                         - build-and-test
                                 filters:
                                         branches:
                                                 only: master
+
